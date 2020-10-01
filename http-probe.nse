@@ -41,8 +41,9 @@ action = function(host, port)
     local result = http.get(host, port, uri)
     local host_name = stdnse.get_hostname(host)
     if ( result.status ) then
-            local proto = getProto(result.ssl)
-                host_name = ipv6Check(host_name)
+        local proto = getProto(result.ssl)
+        host_name = ipv6Check(host_name)
         return proto .. "://" .. host_name .. ":" .. port.number
+    end
     end
 end
