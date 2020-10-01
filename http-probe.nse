@@ -15,35 +15,27 @@ license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
 
 -- The Rule Section --
 portrule = function(host, port)
-    return port.protocol == "tcp"
+    return port.protocol == "tcp" 
         and port.state == "open"
-end
-
-local function getProto(ssl)
-    if (ssl) then
-        return "https"
-    else
-        return "http"
-        end
-end
-
-local function ipv6Check(host_name)
-    if string.match(host_name, ":") then
-        return "[" .. host_name .. "]"
-    else
-        return host_name
-        end
 end
 
 -- The Action Section --
 action = function(host, port)
-    local uri = "/"
+    local default_uri = "/"
+    local uri = stdnse.get_script_args("http-get.uri") or default_uri
     local result = http.get(host, port, uri)
     local host_name = stdnse.get_hostname(host)
     if ( result.status ) then
-        local proto = getProto(result.ssl)
-        host_name = ipv6Check(host_name)
-        return proto .. "://" .. host_name .. ":" .. port.number
-    end
+        if ( result.ssl and string.match(host_name, ":")) then
+            return "https://[" .. host_name .. "]:" .. port.number
+        elseif ( not result.ssl and string.match(host_name, ":")) then 
+            return "http://[" .. host_name .. "]:" .. port.number
+        elseif ( result.ssl ) then
+           return "https://" .. host_name .. ":" .. port.number
+        else
+           return "http://" .. host_name .. ":" .. port.number
+        end
+    else
+        -- return "https://http.cat/" .. result.status
     end
 end
